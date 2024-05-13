@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { Post } = require('../models/');
+const { withGuard, apiGuard, withoutGuard } = require('../utils/authGaurd');
 
 
 // get all posts for homepage
@@ -10,11 +11,10 @@ router.get('/', withGuard, async (req, res) => {
           user_id: req.session.user_id,
         },
       });
-  
-      // Serialize data so the template can read it
+   // Takes array postData converts into a readable object with get/plain/true 
       const posts = postData.map((post) => post.get({ plain: true }));
-  
-      // Pass serialized data and session flag into template
+      console.log(posts);
+      // Pass serialized data into template
       res.render('dashboard', {
         posts,
         loggedIn: req.session.loggedIn,
@@ -23,4 +23,25 @@ router.get('/', withGuard, async (req, res) => {
     } catch (err) {
       res.redirect('/login');
     }
-  });
+});
+  
+// get single post
+router.get('/update/:id', withGuard, async (req, res) => {
+  try {
+    const postData = await Post.findByPk(req.params.id);
+
+    if (postData) {
+      const post = postData.get({ plain: true });
+
+      res.render('editPost', {
+        post,
+        currentPage: 'Dashboard',
+      });
+    } else {
+      res.status(404).end();
+    }
+  } catch (err) {
+    res.redirect('/login');
+  }
+});
+module.exports = router;
